@@ -201,7 +201,8 @@ function Invoke-TunnelInit {
     $resolvedPort = if ($Port -gt 0) { $Port } elseif ($envPort) { [int]$envPort } else { 3000 }
     $envHealth = Get-DotEnvValue "OPENAI_TUNNEL_HEALTH_PORT"
     $resolvedHealth = if ($HealthPort -gt 0) { $HealthPort } elseif ($envHealth) { [int]$envHealth } else { 8080 }
-    $mcpUrl = "http://127.0.0.1:$resolvedPort/mcp"
+    $mcpToken = if ($env:MCP_TOKEN) { $env:MCP_TOKEN } else { Get-DotEnvValue "MCP_TOKEN" }
+    $mcpUrl = if ($mcpToken) { "http://127.0.0.1:$resolvedPort/mcp/$mcpToken" } else { "http://127.0.0.1:$resolvedPort/mcp" }
     Ensure-Profile -McpUrl $mcpUrl -TunnelId $tunnelId -TargetHealthPort $resolvedHealth
 
     $bin = Install-TunnelClient
@@ -259,7 +260,8 @@ if (-not $bin) {
     $bin = Install-TunnelClient
 }
 
-$mcpUrl = "http://127.0.0.1:$resolvedPort/mcp"
+$mcpToken = if ($env:MCP_TOKEN) { $env:MCP_TOKEN } else { Get-DotEnvValue "MCP_TOKEN" }
+$mcpUrl = if ($mcpToken) { "http://127.0.0.1:$resolvedPort/mcp/$mcpToken" } else { "http://127.0.0.1:$resolvedPort/mcp" }
 Ensure-Profile -McpUrl $mcpUrl -TunnelId $tunnelId -TargetHealthPort $resolvedHealth
 
 $env:OPENAI_TUNNEL_API_KEY = $apiKey

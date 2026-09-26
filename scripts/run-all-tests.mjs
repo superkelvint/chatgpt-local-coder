@@ -61,6 +61,7 @@ const unitScripts = [
   "scripts/test-project-memory.mjs",
   "scripts/test-tool-profile.mjs",
   "scripts/test-shell-persist.mjs",
+  "scripts/test-linux-scripts.mjs",
 ];
 
 console.log("\n=== Unit tests ===");
