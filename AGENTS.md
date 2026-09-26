@@ -34,13 +34,13 @@ Thay vào đó:
 ### Lỗi tunnel `stream canceled by remote`
 
 Bình thường khi:
-- Server restart (`stop.ps1` / `start.ps1`, hoặc Ctrl+C `npm start`) trong lúc ChatGPT đang kết nối
+- Server restart (`stop.ps1` / `start.ps1` trên Windows, `stop.sh` / `start.sh` trên Linux, hoặc Ctrl+C `npm start`) trong lúc ChatGPT đang kết nối
 - ChatGPT đóng stream SSE sau khi đổi quyền
-- Tunnel URL đổi (chạy lại `tunnel.ps1` cloudflared) mà chưa update Connector URL
+- Tunnel URL đổi (chạy lại `tunnel.ps1` trên Windows hoặc `tunnel.sh` trên Linux) mà chưa update Connector URL
 
 **Fix:** Giữ server + tunnel chạy ổn định, không restart giữa chừng. Nếu restart → Refresh connector + chat mới.
 
-**Khuyến nghị:** Dùng OpenAI Secure MCP Tunnel — `tunnel_id` cố định, không cần đổi URL connector mỗi lần. Trên Windows: `openai-tunnel.ps1`. Trên macOS/Linux script này không chạy (PowerShell + bản Windows), phải tự tải binary từ [openai/tunnel-client](https://github.com/openai/tunnel-client/releases).
+**Khuyến nghị:** Dùng OpenAI Secure MCP Tunnel — `tunnel_id` cố định, không cần đổi URL connector mỗi lần. Windows dùng `openai-tunnel.ps1`; Linux dùng `openai-tunnel.sh` (tự tải đúng binary amd64/arm64 và verify checksum). macOS dùng binary từ [openai/tunnel-client](https://github.com/openai/tunnel-client/releases).
 
 ## Tool profile — `slim` (mặc định) vs `full`
 
@@ -158,7 +158,18 @@ Dùng `dry_run: true` để xem diff trước khi ghi.
 
 Tunnel cũ (URL đổi mỗi lần): `.\tunnel.ps1` (cloudflared).
 
-**macOS / Linux** — các script `.ps1` không chạy trực tiếp:
+**Linux**
+
+```bash
+bash ./start.sh --force                      # Terminal 1: MCP server
+bash ./openai-tunnel.sh --init               # Terminal 2: chỉ lần đầu
+bash ./openai-tunnel.sh                      # Terminal 2: OpenAI tunnel cố định
+# hoặc bash ./tunnel.sh                      # Cloudflare quick tunnel
+```
+
+Dừng server: `bash ./stop.sh`. `bash ./openai-tunnel.sh --doctor` kiểm tra cấu hình tunnel.
+
+**macOS**
 
 ```bash
 npm start                                    # Terminal 1: MCP server

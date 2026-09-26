@@ -60,21 +60,33 @@ npm run build
 .\start.ps1
 ```
 
-**macOS / Linux**
+**Linux**
+
+```bash
+git clone https://github.com/hoangcoderr/chatgpt-local-coder.git
+cd chatgpt-local-coder
+cp .env.example .env
+npm install
+npm run build
+
+# Edit .env: set WORKSPACE_PATH=/home/you/projects/your-app
+# Generate a token and paste it into MCP_TOKEN
+node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
+
+bash ./start.sh
+```
+
+**macOS**
 
 ```bash
 git clone https://github.com/hoangcoderr/chatgpt-local-coder.git
 cd chatgpt-local-coder
 cp .env.example .env
 npm install && npm run build
-
-# Set your project root and an auth token
-node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"   # paste into MCP_TOKEN
-
 npm start
 ```
 
-> The `.ps1` scripts are **Windows-only**. On macOS/Linux use `npm start` and the shell tunnel commands below — everything else is cross-platform.
+> Linux now has native shell helpers matching the Windows workflow. macOS can continue using the npm commands and tunnel-client directly.
 
 Server runs at `http://127.0.0.1:3000` — health check: `http://127.0.0.1:3000/health`
 
@@ -146,11 +158,26 @@ Stable tunnel ID — connector URL never changes.
 .\openai-tunnel.ps1
 ```
 
+**Linux**
+
+```bash
+# Terminal 1
+bash ./start.sh --force
+
+# Terminal 2 — first time only
+bash ./openai-tunnel.sh --init
+
+# Every time after
+bash ./openai-tunnel.sh
+```
+
+The Linux helper downloads the pinned `tunnel-client v0.0.10` release for amd64 or arm64, verifies it against `SHA256SUMS.txt`, generates the tunnel profile, and supports `--doctor`, `--install`, and `--force`.
+
 Get credentials: [OpenAI Platform → Tunnels](https://platform.openai.com/settings/organization/tunnels)
 
 In ChatGPT Connectors: **Connection type → Tunnel** → paste your `tunnel_…` ID.
 
-> **macOS / Linux:** `openai-tunnel.ps1` is PowerShell and downloads the **Windows** build, so it does not work here. Grab the matching `tunnel-client` binary from [openai/tunnel-client releases](https://github.com/openai/tunnel-client/releases) and run it directly, or use one of the options below.
+> **macOS:** use the matching `tunnel-client` binary from [openai/tunnel-client releases](https://github.com/openai/tunnel-client/releases), or use one of the options below.
 
 ### Option B — Cloudflare Quick Tunnel
 
@@ -164,13 +191,19 @@ Free, but URL changes on every restart (update connector each time).
 ```
 
 ```bash
-# macOS / Linux — Terminal 1
-npm start
+# Linux — Terminal 1
+bash ./start.sh
 # Terminal 2
-npm run tunnel  # cloudflared tunnel --url http://localhost:3000
+bash ./tunnel.sh
 ```
 
-Install cloudflared: `winget install Cloudflare.cloudflared` (Windows) · `brew install cloudflared` (macOS)
+```bash
+# macOS
+npm start
+npm run tunnel
+```
+
+Install cloudflared: `winget install Cloudflare.cloudflared` (Windows) · `brew install cloudflared` (macOS) · follow the [Cloudflare Linux package instructions](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) on Linux.
 
 **Requires outbound port 7844** (TCP *and* UDP) to `*.argotunnel.com`. Many corporate/school/hotel networks block it, and `--protocol http2` does **not** help — it still uses 7844. Check with:
 
@@ -185,8 +218,8 @@ If you see `TCP Connectivity … status=fail` and never `Registered tunnel conne
 Pure SSH over port **443**, so it survives networks that block 7844. No install, no signup.
 
 ```bash
-# Terminal 1
-npm start
+# Terminal 1 (Linux; macOS can use npm start)
+bash ./start.sh
 
 # Terminal 2
 ssh -p 443 -R0:localhost:3000 a.pinggy.io
@@ -265,7 +298,7 @@ Copy `.env.example` → `.env`:
 PORT=3000
 HOST=127.0.0.1
 MCP_TOKEN=                      # generate one — see below
-WORKSPACE_PATH=C:\Users\You\projects\my-app     # macOS: /Users/you/projects/my-app
+WORKSPACE_PATH=/home/you/projects/my-app           # Windows: C:\Users\You\projects\my-app
 CHATGPT_AUTO_APPROVE=true
 SHELL_TIMEOUT=120
 MCP_SESSION_RECOVERY=true
@@ -300,7 +333,7 @@ A local web console ships with the server. It starts **automatically** with `npm
 http://127.0.0.1:3001/ui          # or your ADMIN_PORT
 ```
 
-The exact URL is printed in the startup banner. Stopping the server stops the admin UI too (`Ctrl+C`, `.\stop.ps1`, or `pkill -f "dist/index.js"`).
+The exact URL is printed in the startup banner. Stopping the server stops the admin UI too (`Ctrl+C`, `.\stop.ps1` on Windows, or `bash ./stop.sh` on Linux).
 
 | Tab | What it does |
 |-----|--------------|
@@ -339,9 +372,9 @@ src/
 
 ## 🧪 Development
 
-```powershell
+```bash
 npm run build          # compile TypeScript
-npm test               # patch + tool unit tests
+npm test               # patch + tool unit tests + Linux shell checks
 npm run dev            # watch mode (tsx)
 node scripts/test-mcp-session.mjs   # integration test (server must be running)
 ```
@@ -365,18 +398,19 @@ This server grants **full access to your machine** — files, shell, git. Only e
 |---------|-----|
 | **"Error in message stream"** / **"Lỗi trong luồng tin nhắn"** right after *"Looking for tools"* — **no server log** | You did **not tag the connector**. New chat → **+** → **More** → enable connector, or type **`@Local Coder`** in the message. Then retry. |
 | **Resource not found** on tool call | Refresh connector + new chat. Server auto-recovers sessions — ensure latest build is running. |
-| **Connection failed** | Check `.\start.ps1` + tunnel are both running. URL must be HTTPS. |
+| **Connection failed** | Check `.\start.ps1` (Windows) or `bash ./start.sh` (Linux) plus the tunnel. URL must be HTTPS. |
 | **Permission popup every call** | Settings → Apps → set connector to *Ask before important changes*. Don't use popup "Always allow". |
 | **Tool blocked by OpenAI safety** | Not a server bug. Retry with `run_command` (response may include `run_command_fallback`). Affects `git_push`, `git_checkout`, `delete_directory` occasionally. |
 | **`stream canceled`** in tunnel log | Server/tunnel restarted mid-session → refresh connector, new chat. |
-| **Tunnel URL keeps changing** | Switch to OpenAI Secure Tunnel (`openai-tunnel.ps1`). |
+| **Tunnel URL keeps changing** | Switch to OpenAI Secure Tunnel (`openai-tunnel.ps1` on Windows, `openai-tunnel.sh` on Linux). |
 | **Connector stuck "loading" forever when you click Create** | Make sure you are on the latest build (`npm run build`) — older builds deadlocked on the SSE stream and never answered `tools/list`. Also confirm the URL includes `/mcp/<MCP_TOKEN>`. |
 | **404 on the connector URL** | You omitted the token. Use `https://<tunnel>/mcp/<MCP_TOKEN>`, not `/mcp`. |
 | **cloudflared never prints "Registered tunnel connection"** | Network blocks port 7844. `--protocol http2` will not help (same port). Use Pinggy — Option C. |
 | **`EADDRINUSE` on 3001 at startup** | Something else owns the admin port (often Docker Desktop). Set `ADMIN_PORT=3011`. |
 | **`.env` changes seem ignored** | A shell variable of the same name overrides it. Check `env \| grep WORKSPACE_PATH`. |
 | **`npm test` fails with `spawn bash ENOENT`** | Stale `.mcp-state` from a previous run. `rm -rf .mcp-state` and re-run. |
-| **`.ps1` scripts do nothing on macOS** | They are Windows-only. Use `npm start` and the Option B/C shell commands. |
+| **`.ps1` scripts do nothing on Linux/macOS** | Use the checked-in `.sh` helpers on Linux; on macOS use `npm start` and the Option B/C shell commands. |
+| **`./start.sh: Permission denied`** | Run it as `bash ./start.sh`, or restore executable bits with `chmod +x start.sh stop.sh tunnel.sh openai-tunnel.sh`. |
 | **Access denied** | Wrong path or OS permissions on that file. |
 | **git not found** | Install [Git](https://git-scm.com). |
 
@@ -412,7 +446,7 @@ npm install && npm run build
 .\openai-tunnel.ps1            # terminal 2 (tunnel cố định)
 ```
 
-**macOS / Linux** — các script `.ps1` chỉ chạy trên Windows:
+**Linux**
 
 ```bash
 git clone https://github.com/hoangcoderr/chatgpt-local-coder.git
@@ -420,14 +454,17 @@ cd chatgpt-local-coder
 cp .env.example .env
 npm install && npm run build
 
-# Tạo token rồi dán vào MCP_TOKEN trong .env
+# Sửa WORKSPACE_PATH và tạo MCP_TOKEN trong .env
 node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
 
-npm start                                    # terminal 1
-ssh -p 443 -R0:localhost:3000 a.pinggy.io    # terminal 2
+bash ./start.sh                         # terminal 1
+bash ./openai-tunnel.sh --init          # terminal 2, chỉ lần đầu
+bash ./openai-tunnel.sh                 # terminal 2, các lần sau
 ```
 
-Dùng Pinggy nếu mạng chặn cloudflared (cổng 7844). Nếu cloudflared chạy được thì `npm run tunnel` cũng ổn.
+Cloudflare quick tunnel: `bash ./tunnel.sh`. Dừng server: `bash ./stop.sh`. Dùng Pinggy nếu mạng chặn cloudflared (cổng 7844).
+
+**macOS** vẫn dùng `npm start` và các lệnh tunnel thủ công ở trên.
 
 **ChatGPT:** Settings → Connectors → tạo connector → Refresh → chat mới.
 
