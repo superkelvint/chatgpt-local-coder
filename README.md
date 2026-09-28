@@ -52,7 +52,7 @@ Built for **[ChatGPT Developer Mode](https://platform.openai.com/docs/guides/dev
 **Windows**
 
 ```powershell
-git clone https://github.com/hoangcoderr/chatgpt-local-coder.git
+git clone https://github.com/superkelvint/chatgpt-local-coder.git
 cd chatgpt-local-coder
 copy .env.example .env          # edit WORKSPACE_PATH + MCP_TOKEN
 npm install
@@ -63,7 +63,7 @@ npm run build
 **Linux**
 
 ```bash
-git clone https://github.com/hoangcoderr/chatgpt-local-coder.git
+git clone https://github.com/superkelvint/chatgpt-local-coder.git
 cd chatgpt-local-coder
 cp .env.example .env
 npm install
@@ -79,7 +79,7 @@ bash ./start.sh
 **macOS**
 
 ```bash
-git clone https://github.com/hoangcoderr/chatgpt-local-coder.git
+git clone https://github.com/superkelvint/chatgpt-local-coder.git
 cd chatgpt-local-coder
 cp .env.example .env
 npm install && npm run build
@@ -438,7 +438,7 @@ If this saves you time, **star the repo** — it helps others find it.
 **ChatGPT Local Coder** biến ChatGPT web thành agent code trên máy bạn qua MCP.
 
 ```powershell
-git clone https://github.com/hoangcoderr/chatgpt-local-coder.git
+git clone https://github.com/superkelvint/chatgpt-local-coder.git
 cd chatgpt-local-coder
 copy .env.example .env
 npm install && npm run build
@@ -449,7 +449,7 @@ npm install && npm run build
 **Linux**
 
 ```bash
-git clone https://github.com/hoangcoderr/chatgpt-local-coder.git
+git clone https://github.com/superkelvint/chatgpt-local-coder.git
 cd chatgpt-local-coder
 cp .env.example .env
 npm install && npm run build
